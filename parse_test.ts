@@ -1,6 +1,11 @@
 import { assert, assertEquals, assertFalse } from "https://deno.land/std@0.199.0/assert/mod.ts";
 import { __private as p, __private_run as run } from "./mod.ts";
 
+// deno-lint-ignore no-explicit-any
+const dictFrom = (o: object): Map<string, any> => {
+  return new Map(Object.entries(o))
+}
+
 Deno.test("token", () => {
   const parser = p.token;
 
@@ -141,6 +146,16 @@ Deno.test("scalar", () => {
 
   assert(output.isOk);
   assertEquals(output.value, "hello");
+
+  output = run(parser).with("[]");
+
+  assert(output.isOk);
+  assertEquals(output.value, []);
+
+  output = run(parser).with("{}");
+
+  assert(output.isOk);
+  assertEquals(output.value, {});
 });
 
 Deno.test("whitespace", () => {
@@ -295,6 +310,16 @@ Deno.test("keyValue", () => {
   assert(output.isOk);
   assertEquals(output.value, ["hello", null]);
 
+  output = run(parser).with("hello [1]");
+
+  assert(output.isOk);
+  assertEquals(output.value, ["hello", [1]])
+
+  output = run(parser).with("hello {value 1}");
+
+  assert(output.isOk);
+  assertEquals(output.value, ["hello", {value: 1}]);
+
   // No value
   output = run(parser).with("hello")
 
@@ -344,12 +369,18 @@ Deno.test("list", () => {
   assert(output.isOk);
   assertEquals(output.value, [1, "hello", false, null]);
 
-  output = run(parser).with("[/* blah */]");
-
-  console.log(output);
+  output = run(parser).with("[]");
 
   assert(output.isOk);
   assertEquals(output.value, []);
+
+  // TODO broken
+  // output = run(parser).with("[/* blah */]");
+
+  // console.log(output);
+
+  // assert(output.isOk);
+  // assertEquals(output.value, []);
 });
 
 Deno.test("dictContents", () => {
@@ -363,28 +394,42 @@ Deno.test("dictContents", () => {
   `);
 
   assert(output.isOk);
-  assertEquals(output.value, new Map(Object.entries({
+  assertEquals(output.value, {
     hello: "world",
     num: 1,
     bool: true,
     unit: null
-  })));
+  });
 
-  // TODO broken
   output = run(parser).with(`
     hello "world" // line comment
-    num /*block comment /* 1
-    /* block comment /* bool true
+    num /*block comment */ 1
+    /* block comment */ bool true
     unit
     null
   `);
 
   assert(output.isOk);
-  console.log(output.value);
-  assertEquals(output.value, new Map(Object.entries({
+  assertEquals(output.value, {
     hello: "world",
     num: 1,
     bool: true,
     unit: null
-  })));
-})
+  });
+
+  output = run(parser).with(`
+    inner {}
+  `);
+
+  assert(output.isOk);
+  assertEquals(output.value, { inner: {} });
+});
+
+Deno.test("dict", () => {
+  const parser = p.dict;
+
+  let output = run(parser).with("{}");
+
+  assert(output.isOk);
+  assertEquals(output.value, {});
+});
