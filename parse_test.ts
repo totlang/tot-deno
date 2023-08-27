@@ -1,5 +1,5 @@
 import { assert, assertEquals, assertFalse } from "https://deno.land/std@0.199.0/assert/mod.ts";
-import { __private as p, __private_run as run } from "./mod.ts";
+import { __private as p, __private_run as run, parse } from "./mod.ts";
 
 // deno-lint-ignore no-explicit-any
 const dictFrom = (o: object): Map<string, any> => {
@@ -432,4 +432,30 @@ Deno.test("dict", () => {
 
   assert(output.isOk);
   assertEquals(output.value, {});
+
+  output = run(parser).with("{dict {hello \"world\"}}");
+
+  assert(output.isOk);
+  assertEquals(output.value, { dict: { hello: "world" } });
 });
+
+Deno.test("parse", () => {
+  let output = parse(`
+    hello "world"
+    dict {
+      hello "galaxy"
+      list [
+        "universe"
+        42
+      ]
+    }
+  `);
+
+  assert(output.isOk);
+
+  let value = output.value;
+
+  assertEquals(value.hello, "world");
+  assertEquals(value.dict.hello, "galaxy");
+  assertEquals(value.dict.list, ["universe", 42]);
+})

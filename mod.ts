@@ -17,53 +17,25 @@ const token = map(
 );
 
 // TODO change this to a sentinel value?
-// type Unit = null;
 const unit = mapTo(sigma.string("null"), null);
-// unit.with(
-//   mapTo(sigma.string("null"), null)
-// );
 
-// type Boolean = boolean;
 const boolean = sigma.choice(
   mapTo(sigma.string("true"), true),
   mapTo(sigma.string("false"), false)
 );
-// boolean.with(
-//   sigma.choice(
-//     mapTo(sigma.string("true"), true),
-//     mapTo(sigma.string("false"), false)
-//   )
-// );
 
-// type Number = number;
 const number = sigma.choice(sigma.float(), sigma.whole());
-// number.with(
-//   sigma.choice(sigma.float(), sigma.whole())
-// );
 
-// type String = string;
 const string = map(
   sigma.takeRight(sigma.string("\""), sigma.takeUntil(sigma.any(), sigma.string("\""))),
   (v) => v[0].reduce((prev, val) => prev + val)
 );
-// string.with(
-//   map(
-//     sigma.takeRight(sigma.string("\""), sigma.takeUntil(sigma.any(), sigma.string("\""))),
-//     (v) => v[0].reduce((prev, val) => prev + val)
-//   )
-// );
 
 const key = sigma.choice(token, string);
 
 // deno-lint-ignore no-explicit-any
 type Scalar = null | boolean | number | string | Array<any> | object;
 const scalar = sigma.defer<Scalar>();
-// const scalar = sigma.choice(
-//   unit,
-//   bool,
-//   number,
-//   string
-// );
 
 const whitespace = sigma.whitespace();
 const comma = sigma.string(",");
@@ -107,19 +79,11 @@ const keyValue = sigma.takeMid(
 );
 
 const listContents = sigma.many(sigma.takeMid(allIgnored, scalar, allIgnored));
-// type List = Array<any>;
 const list = sigma.takeMid(
   sigma.string("["),
   listContents,
   sigma.string("]")
 );
-// list.with(
-//   sigma.takeMid(
-//     sigma.string("["),
-//     listContents,
-//     sigma.string("]")
-//   )
-// );
 
 const dictContents = sigma.map(
   sigma.many(keyValue),
@@ -132,11 +96,7 @@ const dictContents = sigma.map(
     return Object.fromEntries(dict);
   }
 );
-// type Dict = Map<any, any>;
 const dict = sigma.takeMid(sigma.string("{"), dictContents, sigma.string("}"));
-// dict.with(
-//   sigma.takeMid(sigma.string("{"), dictContents, sigma.string("}"))
-// );
 
 scalar.with(
   sigma.choice(
@@ -154,10 +114,9 @@ scalar.with(
  * 
  * @param input A string to be parsed into an object.
  */
-export const parse = (input: string) => {
-  const output = sigma.run(dictContents).with(input);
-  
-  console.log(output);
+// deno-lint-ignore no-explicit-any
+export const parse = (input: string): sigma.Result<any> => {
+  return sigma.run(dictContents).with(input);
 };
 
 /**
